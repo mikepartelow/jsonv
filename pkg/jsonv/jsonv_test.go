@@ -44,23 +44,27 @@ func TestTheProblem(t *testing.T) {
 }
 
 func TestTheSolution(t *testing.T) {
-	want := `
-{
-	"kind": "thing/v2",
-	"v1key": "value1",
-	"v2key": "value2"
-}`
+	want := `{"kind":"thing/v2","v1key":"value1","v2key":"value2"}`
 
 	// unmarshal into v1, which doesn't have v2key
 	var v1 ThingV1
-	err := jsonv.Unmarshal([]byte(want), &v1)
+	var x jsonv.Struct
+
+	err := jsonv.Unmarshal([]byte(want), &v1, &x)
 	assert.NoError(t, err)
 	assert.Equal(t, v1.Kind, "thing/v2")
 	assert.Equal(t, v1.V1Key, "value1")
 
+	wantX := jsonv.Struct{"kind": "thing/v2", "v1key": "value1", "v2key": "value2"}
+	assert.Equal(t, wantX, x)
+
 	// marshal from v1
-	got, err := jsonv.Marshal(v1)
+	got, err := jsonv.Marshal(v1, x)
 	assert.NoError(t, err)
 	// no lost information: JSON retains v2key despite no such field in ThingV1
-	assert.Contains(t, got, "v2key")
+	assert.Equal(t, want, string(got))
+
+	// FIXME: nested structs, arrays, nested arrays, nested arrays with nested structs
+	// FIXME: ints, floats, etc
+	// FIXME: unexported fields
 }
